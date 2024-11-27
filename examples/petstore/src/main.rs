@@ -1,7 +1,8 @@
 use crate::api::routes::routes;
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer};
-use apistos::app::OpenApiWrapper;
+use apistos::app::{BuildConfig, OpenApiWrapper};
+use apistos::{RapidocConfig, RedocConfig, ScalarConfig, SwaggerUIConfig};
 use apistos::info::{Contact, Info, License};
 use apistos::paths::ExternalDocumentation;
 use apistos::server::Server;
@@ -71,9 +72,16 @@ async fn main() -> Result<(), impl Error> {
       .document(spec)
       .wrap(Logger::default())
       .service(scope("/test").service(routes()))
-      .build("/openapi.json")
+      .build_with(
+        "/openapi.json",
+        BuildConfig::default()
+          .with(RapidocConfig::new(&"/rapidoc"))
+          .with(RedocConfig::new(&"/redoc"))
+          .with(ScalarConfig::new(&"/scalar"))
+          .with(SwaggerUIConfig::new(&"/swagger")),
+      )
   })
-    .bind((Ipv4Addr::UNSPECIFIED, 8080))?
+    .bind((Ipv4Addr::UNSPECIFIED, 18080))?
     .run()
     .await
 }

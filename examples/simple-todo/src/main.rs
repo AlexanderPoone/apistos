@@ -49,7 +49,7 @@ async fn main() -> Result<(), impl Error> {
           .with(SwaggerUIConfig::new(&"/swagger")),
       )
   })
-  .bind((Ipv4Addr::UNSPECIFIED, 8080))?
+  .bind((Ipv4Addr::UNSPECIFIED, 18080))?
   .run()
   .await
 }
