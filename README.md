@@ -1,4 +1,4 @@
-# Examples
+# Apistos Examples
 * [http://localhost:18080/openapi.json](http://localhost:18080/openapi.json)
 * [http://localhost:18080/rapidoc](http://localhost:18080/rapidoc)
 * [http://localhost:18080/redoc](http://localhost:18080/redoc)
