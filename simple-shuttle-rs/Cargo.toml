@@ -8,11 +8,22 @@ authors = ["Netwo <oss@netwo.com>"]
 
 [dependencies]
 actix-web = "4"
-apistos = { path = "../../apistos", features = ["extras", "qs_query", "rapidoc", "redoc", "swagger-ui"] }
+apistos = { version = "0.4.1", features = [
+    "extras",
+    "qs_query",
+    "rapidoc",
+    "redoc",
+    "swagger-ui",
+] }
 apistos-shuttle = { path = "../../apistos-shuttle" }
-schemars = { package = "apistos-schemars", version = "0.8", features = ["chrono", "uuid1", "url", "rust_decimal"] }
+schemars = { package = "apistos-schemars", version = "0.8", features = [
+    "chrono",
+    "uuid1",
+    "url",
+    "rust_decimal",
+] }
 serde = { version = "1.0", features = ["derive"] }
-shuttle-runtime = { version = "0.44", default-features = false }
+shuttle-runtime = { version = "0.49.0", default-features = false }
 uuid = { version = "1", features = ["serde", "v4"] }
 
 [workspace]
