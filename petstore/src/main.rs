@@ -9,6 +9,7 @@ use apistos::server::Server;
 use apistos::spec::Spec;
 use apistos::tag::Tag;
 use apistos::web::scope;
+use std::env;
 use std::error::Error;
 use std::net::Ipv4Addr;
 
@@ -18,8 +19,13 @@ mod api;
 async fn main() -> Result<(), impl Error> {
   env_logger::init();
 
+  let core_port = match env::var_os("ASPNETCORE_PORT") {
+    Some(v) => v.into_string().unwrap().parse::<u16>().unwrap(),
+    None => panic!("$ASPNETCORE_PORT is not set")
+  };
+
   HttpServer::new(move || {
-    let spec = Spec {
+    let spec = Spec {   // <--------------------------- SPEC is the main object
       default_tags: vec!["api".to_owned()],
       tags: vec![
         Tag {
@@ -43,7 +49,7 @@ async fn main() -> Result<(), impl Error> {
           ..Default::default()
         },
       ],
-      info: Info {
+      info: Info {    // <------------------------------------ INFO inside SPEC
         title: "Swagger Petstore - OpenAPI 3.0".to_string(),
         description: Some("This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about\nSwagger at [http://swagger.io](http://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!\nYou can now help us improve the API whether it's by making changes to the definition itself or to the code.\nThat way, with time, we can improve the API in general, and expose some of the new features in OAS3.\n\nSome useful links:\n- [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)\n- [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)".to_string()),
         terms_of_service: Some("http://swagger.io/terms/".to_string()),
@@ -69,19 +75,36 @@ async fn main() -> Result<(), impl Error> {
     };
 
     App::new()
-      .document(spec)
-      .wrap(Logger::default())
+      .document(spec)  // <------------------------------------ document(spec)
+      .wrap(Logger::default())  // <--------------------------- As usual from here.
       .service(scope("/test").service(routes()))
       .build_with(
         "/openapi.json",
-        BuildConfig::default()
+        BuildConfig::default()   // <-------------------------- BuildConfig is apistos
           .with(RapidocConfig::new(&"/rapidoc"))
-          .with(RedocConfig::new(&"/redoc"))
+          .with(RedocConfig::new(&"/redoc"))    // Redoc has no Try feature?
           .with(ScalarConfig::new(&"/scalar"))
           .with(SwaggerUIConfig::new(&"/swagger")),
       )
   })
-    .bind((Ipv4Addr::UNSPECIFIED, 18080))?
+    .bind((Ipv4Addr::UNSPECIFIED, core_port))?
     .run()
     .await
+
+  // cf. Rocket
+  // let core_port = match env::var_os("ASPNETCORE_PORT") {
+  //     Some(v) => v.into_string().unwrap().parse::<i32>().unwrap(),
+  //     None => panic!("$ASPNETCORE_PORT is not set")
+  // };
+
+  // let cfg = Config::figment()
+  //     .merge(("address", "0.0.0.0"))
+  //     .merge(("port", core_port));
+
+  // rocket::custom(cfg)
+  //     .manage(db)
+  //     .manage(channel::<Message>(1024).0)
+  //     .mount("/", routes![post, events])
+  //     .mount("/", FileServer::from(relative!("static")))
+  //     .attach(CORS)
 }
