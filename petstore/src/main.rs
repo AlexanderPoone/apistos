@@ -9,7 +9,7 @@ use apistos::server::Server;
 use apistos::spec::Spec;
 use apistos::tag::Tag;
 use apistos::web::scope;
-use std::env;
+use std::{env, fs};
 use std::error::Error;
 use std::net::Ipv4Addr;
 
@@ -19,10 +19,16 @@ mod api;
 async fn main() -> Result<(), impl Error> {
   env_logger::init();
 
+  let data = "埗鰂";
+  fs::write("C:/Users/Alex/Desktop/a.txt", data).expect("Unable to write file");
+
   let core_port = match env::var_os("ASPNETCORE_PORT") {
     Some(v) => v.into_string().unwrap().parse::<u16>().unwrap(),
     None => panic!("$ASPNETCORE_PORT is not set")
   };
+
+  let data2 = "Some data!";
+  fs::write("C:/Users/Alex/Desktop/b.txt", data2).expect("Unable to write file");
 
   HttpServer::new(move || {
     let spec = Spec {   // <--------------------------- SPEC is the main object
@@ -73,6 +79,9 @@ async fn main() -> Result<(), impl Error> {
       servers: vec![Server { url: "/api/v3".to_string(), ..Default::default() }],
       ..Default::default()
     };
+
+    let data3 = "Some data!";
+    fs::write("C:/Users/Alex/Desktop/c.txt", data3).expect("Unable to write file");
 
     App::new()
       .document(spec)  // <------------------------------------ document(spec)

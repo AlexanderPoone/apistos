@@ -1,0 +1,28 @@
+[package]
+name = "simple-todo"
+description = "Simple TODO example api"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Netwo <oss@netwo.com>"]
+
+[dependencies]
+actix-web = "4"
+apistos = { version = "0.4.1", features = [
+    "extras",
+    "qs_query",
+    "rapidoc",
+    "redoc",
+    "scalar",
+    "swagger-ui",
+] }
+schemars = { package = "apistos-schemars", version = "0.8", features = [
+    "chrono",
+    "uuid1",
+    "url",
+    "rust_decimal",
+] }
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+
+[workspace]

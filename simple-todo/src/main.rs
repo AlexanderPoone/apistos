@@ -15,28 +15,28 @@ mod api;
 #[actix_web::main]
 async fn main() -> Result<(), impl Error> {
   HttpServer::new(move || {
-    let spec = Spec {
-      info: Info {
+    let spec = Spec { // <------------------ Again, SPEC
+      info: Info {   // <------------------------- INFO inside SPEC
         title: "A well documented API".to_string(),
         description: Some(
-          "This is an API documented using Apistos,\na wonderful new tool to document your actix API !".to_string(),
+          "This is an API documented using Apistos,\na wonderful new tool to document your actix API !".to_string(), // `Option` means `Some(...)``
         ),
-        ..Default::default()
+        ..Default::default()  // <---------------- Use defaults for the rest
       },
       servers: vec![Server {
         url: "/api/v3".to_string(),
-        ..Default::default()
+        ..Default::default() // <---------------- Use defaults for the rest
       }],
-      ..Default::default()
+      ..Default::default()   // <---------------- Use defaults for the rest
     };
 
     App::new()
-      .document(spec)
-      .wrap(Logger::default())
+      .document(spec) // <-------------------------- document(spec)
+      .wrap(Logger::default()) // <----------------- As usual from here.
       .service(
         scope("/test").service(
           scope("/todo")
-            .service(resource("/{todo_id}").route(get().to(get_todo)))
+            .service(resource("/{todo_id}").route(get().to(get_todo))) // <---------------------- {param} defined here
             .service(resource("").route(post().to(add_todo))),
         ),
       )
