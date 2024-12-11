@@ -54,3 +54,69 @@ pub(crate) async fn add_todo(body: Json<NewTodo>) -> Result<CreatedJson<Todo>, E
     description: new_todo.description,
   }))
 }
+
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn testConnection(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn signIn_github(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn signIn_google(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn signUp(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn confirmAccount(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn signIn(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn signOut(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn requestChangePassword(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn changePasswordWithToken(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn setAccountSetting(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn getBlogs(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn getProjects(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
+
+#[api_operation(summary = "Add a new element to the todo list")]
+pub(crate) async fn converted(body: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+  Ok(Json(None))
+}
