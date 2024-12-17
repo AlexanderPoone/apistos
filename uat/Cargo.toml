@@ -16,13 +16,22 @@ apistos = { version = "0.4.1", features = [
     "scalar",
     "swagger-ui",
 ] }
+lettre = "0.11.11"
 schemars = { package = "apistos-schemars", version = "0.8", features = [
     "chrono",
     "uuid1",
     "url",
     "rust_decimal",
 ] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.216", features = ["derive"] }
 uuid = { version = "1", features = ["serde", "v4"] }
+sqlx = { version = "0.8.2", features = ["runtime-async-std", "postgres"] }
+rand = "0.8"  # For random number generation
+sha2 = "0.10"  # For SHA-512 hashing
+env_logger = "0.11.5"  # For logging
+# Optional: Add serde_json if you're working with JSON serialization/deserialization
+serde_json = "1.0"
+oauth2 = { version = "4", features = ["reqwest"] }
+dotenvy = "0.15.7"
 
 [workspace]
