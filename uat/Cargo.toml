@@ -8,6 +8,7 @@ authors = ["Netwo <oss@netwo.com>"]
 
 [dependencies]
 actix-web = "4"
+actix-cors = "0.7.0"
 apistos = { version = "0.4.1", features = [
     "extras",
     "qs_query",
@@ -25,7 +26,7 @@ schemars = { package = "apistos-schemars", version = "0.8", features = [
 ] }
 serde = { version = "1.0.216", features = ["derive"] }
 uuid = { version = "1", features = ["serde", "v4"] }
-sqlx = { version = "0.8.2", features = ["runtime-async-std", "postgres"] }
+sqlx = { version = "0.8.2", features = ["runtime-async-std", "postgres", "chrono"] }
 rand = "0.8"  # For random number generation
 sha2 = "0.10"  # For SHA-512 hashing
 env_logger = "0.11.5"  # For logging
@@ -33,5 +34,6 @@ env_logger = "0.11.5"  # For logging
 serde_json = "1.0"
 oauth2 = { version = "4", features = ["reqwest"] }
 dotenvy = "0.15.7"
+chrono = "0.4.39"
 
 [workspace]

@@ -2,6 +2,7 @@ use actix_web::web::{Data, Json, Path};
 use actix_web::{Error, HttpResponse, Responder};
 use apistos::actix::CreatedJson;
 use apistos::{api_operation, ApiComponent};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
@@ -10,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha512};
-use sqlx::{query, PgPool};
+use sqlx::{query, FromRow, PgPool};
 use std::fs;
 use uuid::Uuid;
 /* TODO: Auth
@@ -39,7 +40,7 @@ impl OAuthConfig {
 }
 async fn google_login() -> impl Responder {
   let config = OAuthConfig::from_env();
-  
+
   let auth_url = config.client_id.auth_url(
       RedirectUrl::new(config.redirect_uri.clone()).unwrap(),
       Some(CsrfToken::new_random()), // CSRF protection
@@ -109,7 +110,10 @@ pub(crate) async fn get_todo(todo_id: Path<Uuid>) -> Result<Json<Todo>, Error> {
 // async fn index(path: Path<(String, u32)>) -> String {
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn add_todo(pool: Data<PgPool>, req: Json<NewTodo>) -> Result<CreatedJson<Todo>, Error> {
+pub(crate) async fn add_todo(
+    pool: Data<PgPool>,
+    req: Json<NewTodo>,
+) -> Result<CreatedJson<Todo>, Error> {
     // <----- it should eat both a `Path` (for parameters) and a `Json` (for body)
     let new_todo = req.into_inner();
     Ok(CreatedJson(Todo {
@@ -119,22 +123,81 @@ pub(crate) async fn add_todo(pool: Data<PgPool>, req: Json<NewTodo>) -> Result<C
     }))
 }
 
+#[derive(FromRow, Debug, Serialize, JsonSchema)]
+pub struct Blog {
+    pub publishedtime: NaiveDateTime,
+    pub minread: i32,
+    pub headerimage: Option<String>,
+    pub title_en: String,
+    pub permalink: String,
+    pub richtextcontent_en: String,
+    pub tags_en: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema, ApiComponent)]
+pub struct Out {
+    pub maxPageNum: i32,
+    pub posts: Vec<Blog>,
+}
+
+#[derive(Debug, Serialize, JsonSchema, ApiComponent, FromRow)]
+pub struct Proj {
+    pub detailslink: String,
+    pub title_en: String,
+    pub description_en: String,
+    pub thumbnailbase64: Option<String>,
+}
+
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn testConnection(pool: Data<PgPool>) -> Result<Json<String>, Error> {
-    let row = query!("SELECT email FROM users").fetch_all(pool.get_ref())
+pub(crate) async fn getBlogs(
+    pool: Data<PgPool>,
+    page: Path<i64>,
+) -> Result<Json<Out>, Error> {
+    let pool_ref = pool.get_ref();
+
+    // Don't use the macro version `query_as!` (slow and does not use the `from_row` trait !) !!!
+    let offset = 3 * (page.into_inner() - 1);
+    let rows = sqlx::query_as::<_, Blog>(
+        r#"SELECT * FROM blog ORDER BY publishedtime DESC OFFSET $1 ROWS FETCH FIRST 3 ROWS ONLY"#,
+    )
+    .bind(offset)
+    .fetch_all(pool_ref)
     .await
-    .unwrap_or_default();
-    let out = format!("{:?}", row);
+    .map_err(|e| {
+        // Log the error or handle it as necessary
+        eprintln!("Database query failed: {}", e);
+        // Return an Actix Web error response
+        actix_web::error::ErrorInternalServerError("Failed to fetch blogs")
+    })?;
+
+    // If successful, return the results
+    let max_page_num = query!("select CAST(CEIL(COUNT(*) / 3.0) AS INTEGER) from blog")
+        .fetch_one(pool_ref)
+        .await
+        .unwrap()
+        .ceil
+        .unwrap();
+
+    let out = Out {
+        maxPageNum: max_page_num,
+        posts: rows,
+    };
     Ok(Json(out))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn signIn_github(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn signIn_github(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn signIn_google(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn signIn_google(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
@@ -190,22 +253,22 @@ pub async fn send_mail(params: EmailParams) {
         .body(html_content)
         .unwrap();
 
-      let creds = Credentials::new("smtp_username".to_owned(), "smtp_password".to_owned());
+    let creds = Credentials::new("smtp_username".to_owned(), "smtp_password".to_owned());
 
-      // TODO: Change gmail to local...
-      let smtp_server = "peciel.com";
-      let port = 20005;
-      // Open a remote connection to gmail
-      let mailer = SmtpTransport::relay("smtp.gmail.com")
-          .unwrap()
-          .credentials(creds)
-          .build();
-      
-      // Send the email
-      match mailer.send(&email) {
-          Ok(_) => println!("Email sent successfully!"),
-          Err(e) => panic!("Could not send email: {e:?}"),
-      }
+    // TODO: Change gmail to local...
+    let smtp_server = "peciel.com";
+    let port = 20005;
+    // Open a remote connection to gmail
+    let mailer = SmtpTransport::relay("smtp.gmail.com")
+        .unwrap()
+        .credentials(creds)
+        .build();
+
+    // Send the email
+    match mailer.send(&email) {
+        Ok(_) => println!("Email sent successfully!"),
+        Err(e) => panic!("Could not send email: {e:?}"),
+    }
 }
 
 #[derive(Debug, Deserialize, JsonSchema, ApiComponent)]
@@ -216,7 +279,9 @@ pub struct SignUpRequest {
 }
 
 // #[post("/signUp")]
-#[api_operation(summary = "Account registration. This will send confirmation email to your email. Check your mailbox.")]
+#[api_operation(
+    summary = "Account registration. This will send confirmation email to your email. Check your mailbox."
+)]
 pub(crate) async fn signUp(pool: Data<PgPool>, req: Json<SignUpRequest>) -> impl Responder {
     print!("{:?}", req);
 
@@ -278,51 +343,78 @@ pub(crate) async fn signUp(pool: Data<PgPool>, req: Json<SignUpRequest>) -> impl
     HttpResponse::Ok().json(json!({"ok": 1}))
 }
 
-#[api_operation(summary = "Activate an account using the one-time token included in the confirmation email. Log in email and password are not needed.")]
-pub(crate) async fn confirmAccount(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+#[api_operation(
+    summary = "Activate an account using the one-time token included in the confirmation email. Log in email and password are not needed."
+)]
+pub(crate) async fn confirmAccount(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Log in.")]
-pub(crate) async fn signIn(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn signIn(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Log out.")]
-pub(crate) async fn signOut(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn signOut(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Request a password reset.")]
 pub(crate) async fn requestChangePassword(
-    pool: Data<PgPool>, req: Json<Option<u8>>,
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
 ) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
-#[api_operation(summary = "(Actually) change user password after requesting a reset using the one-time token included in the request email. The log in email is not needed.")]
+#[api_operation(
+    summary = "(Actually) change user password after requesting a reset using the one-time token included in the request email. The log in email is not needed."
+)]
 pub(crate) async fn changePasswordWithToken(
-    pool: Data<PgPool>, req: Json<Option<u8>>,
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
 ) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn setAccountSetting(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn setAccountSetting(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn getBlogs(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
-    Ok(Json(None))
+pub(crate) async fn getProjects(pool: Data<PgPool>) -> Result<Json<Vec<Proj>>, Error> {
+    let rows = sqlx::query_as::<_, Proj>("SELECT * FROM projects")
+        .fetch_all(pool.get_ref())
+        .await
+        .map_err(|e| {
+            // Log the error or handle it as necessary
+            eprintln!("Database query failed: {}", e);
+            // Return an Actix Web error response
+            actix_web::error::ErrorInternalServerError("Failed to fetch")
+        })?;
+
+    // If successful, return the results
+    Ok(Json(rows))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn getProjects(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
-    Ok(Json(None))
-}
-
-#[api_operation(summary = "Add a new element to the todo list")]
-pub(crate) async fn converted(pool: Data<PgPool>, req: Json<Option<u8>>) -> Result<Json<Option<u8>>, Error> {
+pub(crate) async fn converted(
+    pool: Data<PgPool>,
+    req: Json<Option<u8>>,
+) -> Result<Json<Option<u8>>, Error> {
     Ok(Json(None))
 }
