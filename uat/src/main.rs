@@ -55,6 +55,7 @@ async fn main() -> Result<(), impl Error> {
             .wrap(Logger::default()) // <----------------- As usual from here.
             .app_data(web::Data::new(pool.clone()))
             .service(resource("/getBlogs/{page}").route(get().to(getBlogs))) // <---------------------- {param} and get()/post() are defined here. EACH ENDPOINT IS ONE **SERVICE**.
+            .service(resource("/getBlogs/permalink/{slug}").route(get().to(getBlogPermalink)))
             .service(resource("/getProjects").route(get().to(getProjects)))
             .service(resource("/signIn_github").route(post().to(signIn_github)))
             .service(resource("/signIn_google").route(post().to(signIn_google)))

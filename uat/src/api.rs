@@ -123,7 +123,7 @@ pub(crate) async fn add_todo(
     }))
 }
 
-#[derive(FromRow, Debug, Serialize, JsonSchema)]
+#[derive(FromRow, Debug, Serialize, JsonSchema, ApiComponent)]
 pub struct Blog {
     pub publishedtime: NaiveDateTime,
     pub minread: i32,
@@ -148,7 +148,7 @@ pub struct Proj {
     pub thumbnailbase64: Option<String>,
 }
 
-#[api_operation(summary = "Add a new element to the todo list")]
+#[api_operation(summary = "Get Alex's Blogs by Page Number")]
 pub(crate) async fn getBlogs(
     pool: Data<PgPool>,
     page: Path<i64>,
@@ -174,6 +174,12 @@ pub(crate) async fn getBlogs(
     let max_page_num = query!("select CAST(CEIL(COUNT(*) / 3.0) AS INTEGER) from blog")
         .fetch_one(pool_ref)
         .await
+        .map_err(|e| {
+            // Log the error or handle it as necessary
+            eprintln!("Database query failed: {}", e);
+            // Return an Actix Web error response
+            actix_web::error::ErrorInternalServerError("Failed to fetch count")
+        })
         .unwrap()
         .ceil
         .unwrap();
@@ -183,6 +189,25 @@ pub(crate) async fn getBlogs(
         posts: rows,
     };
     Ok(Json(out))
+}
+
+#[api_operation(summary = "Get one Alex's Blog by Permalink")]
+pub(crate) async fn getBlogPermalink(pool: Data<PgPool>,
+    slug: Path<String>,) -> Result<Json<Blog>, Error> {
+    let rows = sqlx::query_as::<_, Blog>(
+        r#"SELECT * FROM blogs WHERE permalink = $1"#,
+    )
+    .bind(slug.into_inner())
+    .fetch_one(pool.get_ref())
+    .await
+    .map_err(|e| {
+        // Log the error or handle it as necessary
+        eprintln!("Database query failed: {}", e);
+        // Return an Actix Web error response
+        actix_web::error::ErrorInternalServerError("No such blog")
+    })?;
+    
+    Ok(Json(rows))
 }
 
 #[api_operation(summary = "Add a new element to the todo list")]
