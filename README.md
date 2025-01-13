@@ -1,5 +1,5 @@
 # Apistos Examples
-Apistos supports Rapidoc, Redoc, Scalar and Swagger:
+Apistos examples for Rapidoc, Redoc, Scalar and Swagger:
 * [http://localhost:18080/openapi.json](http://localhost:18080/openapi.json)
 * [http://localhost:18080/rapidoc](http://localhost:18080/rapidoc)
 * [http://localhost:18080/redoc](http://localhost:18080/redoc)
